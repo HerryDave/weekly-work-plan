@@ -40,7 +40,7 @@ const PlansPage: React.FC = () => {
         getGroups(),
       ]);
       setUsers(u);
-      setProjects(pr);
+      setProjects(pr.filter((p: Project) => p.status !== 'closed'));
       setGroups(g);
       setPlans(plansData);
       const initData: Record<string, number> = {};

@@ -57,11 +57,13 @@ async def get_plans(
 ):
     query = (
         select(WeeklyPlan)
+        .join(Project, WeeklyPlan.project_id == Project.id)
         .options(
             joinedload(WeeklyPlan.user).joinedload(User.group),
             joinedload(WeeklyPlan.project),
         )
     )
+    query = query.where(Project.status != "closed")
 
     if week_start_date:
         query = query.where(WeeklyPlan.week_start_date == week_start_date)

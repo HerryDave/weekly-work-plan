@@ -28,6 +28,15 @@ const PlansPage: React.FC = () => {
     return u.group_id === user?.group_id;
   });
 
+  const filteredProjects = (() => {
+    // manager 选了室组 → 只看该室组项目；manager 没选 → 看全部
+    // leader → 只看自己室组项目（不能选其他室组）
+    // employee → 看全部（非结项）项目
+    if (selectedGroupId) return projects.filter(p => p.group_id === selectedGroupId);
+    if (isLeader) return projects.filter(p => p.group_id === user?.group_id);
+    return projects;
+  })();
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -96,7 +105,7 @@ const PlansPage: React.FC = () => {
   const columns: ColumnsType<{ id: number; real_name: string; group_id: number | null }> = [
     { title: '室组', dataIndex: 'group_id', key: 'group_id', width: 100, fixed: 'left' as const, render: id => groups.find(g => g.id === id)?.name ?? '-' },
     { title: '员工', dataIndex: 'real_name', key: 'real_name', width: 100, fixed: 'left' as const },
-    ...projects.map(p => ({
+    ...filteredProjects.map(p => ({
       title: (
         <Tooltip title={`目标人天: ${p.target_man_days ?? 0} 人天 | 实际投入: ${p.actual_man_days ?? 0} 人天`}>
           <span>{p.name}</span>

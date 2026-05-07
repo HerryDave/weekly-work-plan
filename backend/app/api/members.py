@@ -17,31 +17,66 @@ router = APIRouter(prefix="/projects", tags=["members"])
 members_router = APIRouter(prefix="/members", tags=["members"])
 
 
-@members_router.get("", response_model=list[ProjectMemberResponse])
+@members_router.get("", response_model=None)
 async def list_all_members(
     current_user: Annotated[User, Depends(get_current_user)] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
-):
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> list[dict]:
     """列出所有项目成员（全局）"""
-    result = await db.execute(select(ProjectMember))
-    return result.scalars().all()
+    from app.models.group import Group
+    result = await db.execute(
+        select(ProjectMember, User, Group)
+        .join(User, ProjectMember.user_id == User.id)
+        .outerjoin(Group, User.group_id == Group.id)
+    )
+    rows = result.all()
+
+    members = []
+    for pm, user, group in rows:
+        members.append({
+            "id": pm.id,
+            "project_id": pm.project_id,
+            "user_id": pm.user_id,
+            "joined_at": pm.joined_at,
+            "real_name": user.real_name,
+            "username": user.username,
+            "group_name": group.name if group else None,
+        })
+    return members
 
 
-@router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
+@router.get("/{project_id}/members", response_model=None)
 async def get_project_members(
     project_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[dict]:
     result = await db.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
+    # Join ProjectMember with User and Group to get full user info
+    from app.models.group import Group
     result = await db.execute(
-        select(ProjectMember).where(ProjectMember.project_id == project_id)
+        select(ProjectMember, User, Group)
+        .join(User, ProjectMember.user_id == User.id)
+        .outerjoin(Group, User.group_id == Group.id)
+        .where(ProjectMember.project_id == project_id)
     )
-    members = result.scalars().all()
+    rows = result.all()
+
+    members = []
+    for pm, user, group in rows:
+        members.append({
+            "id": pm.id,
+            "project_id": pm.project_id,
+            "user_id": pm.user_id,
+            "joined_at": pm.joined_at,
+            "real_name": user.real_name,
+            "username": user.username,
+            "group_name": group.name if group else None,
+        })
     return members
 
 
@@ -50,7 +85,7 @@ async def add_project_member(
     project_id: int,
     member_data: ProjectMemberCreate,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     result = await db.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
@@ -70,7 +105,7 @@ async def add_project_member(
     existing = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
-            ProjectMember.user_id == member_data.user_id
+            ProjectMember.user_id == member_data.user_id,
         )
     )
     if existing.scalar_one_or_none():
@@ -121,7 +156,7 @@ async def remove_project_member(
     project_id: int,
     user_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     result = await db.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
@@ -134,7 +169,7 @@ async def remove_project_member(
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
-            ProjectMember.user_id == user_id
+            ProjectMember.user_id == user_id,
         )
     )
     member = result.scalar_one_or_none()

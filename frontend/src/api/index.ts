@@ -78,6 +78,47 @@ export const updateProject = async (id: number, data: Partial<Project>): Promise
 export const deleteProject = async (id: number): Promise<void> => {
   await axiosInstance.delete(`${BASE}/projects/${id}`);
 };
+export const mergeProjects = async (sourceProjectId: number, targetProjectId: number): Promise<{ message: string }> => {
+  const resp = await axiosInstance.post(`${BASE}/projects/merge`, {
+    source_project_id: sourceProjectId,
+    target_project_id: targetProjectId,
+  });
+  return resp.data;
+};
+
+export interface MergePreview {
+  source_project_name: string;
+  target_project_name: string;
+  members_count: number;
+  plans_count: number;
+  duplicate_plans_count: number;
+  registrations_count: number;
+  duplicate_registrations_count: number;
+  efforts_count: number;
+}
+
+export const getMergePreview = async (sourceProjectId: number, targetProjectId: number): Promise<MergePreview> => {
+  const resp = await axiosInstance.get<MergePreview>(`${BASE}/projects/merge/preview`, {
+    params: { source_project_id: sourceProjectId, target_project_id: targetProjectId },
+  });
+  return resp.data;
+};
+
+export interface OperationLog {
+  id: number;
+  operator_id: number;
+  operator_name: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: number;
+  detail: string | null;
+  created_at: string;
+}
+
+export const getOperationLogs = async (params?: { limit?: number; offset?: number; action?: string; entity_type?: string }): Promise<OperationLog[]> => {
+  const resp = await axiosInstance.get<OperationLog[]>(`${BASE}/operations/logs`, { params });
+  return resp.data;
+};
 
 // ========== 项目成员 ==========
 export const getProjectMembers = async (projectId: number): Promise<ProjectMember[]> => {

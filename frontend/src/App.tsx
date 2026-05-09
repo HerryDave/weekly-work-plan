@@ -15,6 +15,7 @@ import EffortsPage from './pages/EffortsPage';
 import AlertsPage from './pages/AlertsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ManpowerPage from './pages/ManpowerPage';
+import OperationsLogPage from './pages/OperationsLogPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
   children,
@@ -100,6 +101,14 @@ const AppRoutes: React.FC = () => {
         />
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route
+          path="operations"
+          element={
+            <ProtectedRoute allowedRoles={['manager']}>
+              <OperationsLogPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

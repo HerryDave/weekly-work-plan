@@ -8,6 +8,12 @@ import type { ActualEffort, User, Group, Project } from '../types';
 import { roleLabels } from '../types';
 import type { Role } from '../types';
 
+// 强制转周一起始日（dayjs.startOf('week') 不参考 locale weekStart）
+function toMonday(d: dayjs.Dayjs): dayjs.Dayjs {
+  const day = d.day(); // 0=Sun
+  return day === 0 ? d.subtract(6, 'day') : d.subtract(day - 1, 'day');
+}
+
 const { Title } = Typography;
 
 const EffortsPage: React.FC = () => {
@@ -59,7 +65,7 @@ const EffortsPage: React.FC = () => {
     form.setFieldsValue({
       user_id: r.user_id,
       project_id: r.project_id,
-      week_start_date: r.week_start_date ? dayjs(r.week_start_date).startOf('week') : null,
+      week_start_date: r.week_start_date ? toMonday(dayjs(r.week_start_date)) : null,
       actual_man_days: r.actual_man_days,
     });
     setModalVisible(true);
@@ -82,7 +88,7 @@ const EffortsPage: React.FC = () => {
       const payload = {
         user_id: values.user_id as number,
         project_id: values.project_id as number,
-        week_start_date: (values.week_start_date as dayjs.Dayjs).startOf('week').format('YYYY-MM-DD'),
+        week_start_date: toMonday(values.week_start_date as dayjs.Dayjs).format('YYYY-MM-DD'),
         actual_man_days: values.actual_man_days as number,
       };
       console.log('[handleSubmit] payload:', JSON.stringify(payload, null, 2));
@@ -112,12 +118,7 @@ const EffortsPage: React.FC = () => {
     },
     { title: '室组', dataIndex: 'group_name', key: 'group_name', width: 130, render: n => n || '-' },
     { title: '项目名称', dataIndex: 'project_name', key: 'project_name', width: 150, ellipsis: true, render: n => n || '-' },
-    { title: '周期', dataIndex: 'week_start_date', key: 'week_start_date', width: 100, render: (d: string) => {
-      if (!d) return '-';
-      const dt = new Date(d);
-      const weekNum = Math.ceil(((dt - new Date(dt.getFullYear(), 0, 1)) / 86400000 + dt.getDay() + 1) / 7);
-      return `W${weekNum}/${(`0${dt.getMonth()+1}`).slice(-2)}-${(`0${dt.getDate()}`).slice(-2)}`;
-    } },
+    { title: '周期', dataIndex: 'week_label', key: 'week_label', width: 100, render: l => l || '-' },
     { title: '投入人力', dataIndex: 'actual_man_days', key: 'actual_man_days', width: 80, render: v => `${v} 人天` },
     { title: '录入人', dataIndex: 'created_by_real_name', key: 'created_by_real_name', width: 80, render: n => n || '-' },
     {

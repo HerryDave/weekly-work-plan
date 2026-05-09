@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Annotated
-from datetime import date
+from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,8 +13,6 @@ from app.models.project import Project, ProjectMember
 from app.schemas.plan import WeeklyPlanBatchRequest, WeeklyPlanResponse
 from app.dependencies import get_current_user
 from app.utils.alert_engine import trigger_alerts_on_plan_change
-from app.models.operation_log import OperationLog
-import json
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -66,7 +64,17 @@ async def get_plans(
     query = query.where(Project.status != "closed")
 
     if week_start_date:
-        query = query.where(WeeklyPlan.week_start_date == week_start_date)
+        # Query by ISO week: find the Monday of the week and the following Sunday
+        iso = week_start_date.isocalendar()
+        # In Python, isocalendar returns (year, week_number, weekday)
+        # weekday 1 = Monday, 7 = Sunday
+        # Get the Monday of the target week
+        monday_of_week = week_start_date - timedelta(days=week_start_date.weekday())
+        sunday_of_week = monday_of_week + timedelta(days=6)
+        query = query.where(
+            WeeklyPlan.week_start_date >= monday_of_week,
+            WeeklyPlan.week_start_date <= sunday_of_week
+        )
     if user_id:
         query = query.where(WeeklyPlan.user_id == user_id)
     if project_id:
@@ -170,16 +178,9 @@ async def batch_update_plans(
 
     await db.flush()  # 先flush，plan.id已写入但不expire对象
 
-    # 触发预警检查（W01 + W02）并记录操作日志
+    # 触发预警检查（W01 + W02）
     for plan_data, (plan, before, after, action) in zip(batch_data.plans, results):
         await trigger_alerts_on_plan_change(db, plan_data.user_id, plan_data.project_id, plan_data.week_start_date)
-        db.add(OperationLog(
-            operator_id=current_user.id,
-            action=action,
-            entity_type="weekly_plan",
-            entity_id=plan.id,
-            detail=json.dumps({"before": before, "after": after}, ensure_ascii=False),
-        ))
     await db.commit()
 
     plan_ids = [p[0].id for p in results]

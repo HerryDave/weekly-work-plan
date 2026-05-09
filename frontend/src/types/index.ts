@@ -74,6 +74,7 @@ export interface ActualEffort {
   group_name?: string | null;
   project_name?: string;
   created_by_real_name?: string;
+  week_label?: string;
 }
 
 export interface Alert {

@@ -202,13 +202,13 @@ const ProjectDetailPage: React.FC = () => {
           {variance ? (
             <>
               <Row gutter={16} style={{ marginBottom: 24 }}>
-                <Col span={6}><Statistic title="总计划" value={variance.summary.total_planned} suffix="h" /></Col>
-                <Col span={6}><Statistic title="总实际" value={variance.summary.total_actual} suffix="h" /></Col>
+                <Col span={6}><Statistic title="总计划" value={variance.summary.total_planned} suffix="人天" /></Col>
+                <Col span={6}><Statistic title="总实际" value={variance.summary.total_actual} suffix="人天" /></Col>
                 <Col span={6}>
                   <Statistic
                     title="总偏差"
                     value={variance.summary.total_variance > 0 ? `+${variance.summary.total_variance}` : variance.summary.total_variance}
-                    suffix="h"
+                    suffix="人天"
                     valueStyle={{ color: variance.summary.total_variance > 0 ? '#ff4d4f' : '#52c41a' }}
                   />
                 </Col>
@@ -226,9 +226,9 @@ const ProjectDetailPage: React.FC = () => {
                 dataSource={variance.weekly.map(w => ({ ...w, key: w.week_start }))}
                 columns={[
                   { title: '周', dataIndex: 'week_label', key: 'week_label' },
-                  { title: '计划(h)', dataIndex: 'planned', key: 'planned' },
-                  { title: '实际(h)', dataIndex: 'actual', key: 'actual' },
-                  { title: '偏差(h)', dataIndex: 'variance', key: 'variance', render: v => v > 0 ? <span style={{ color: '#ff4d4f' }}>+{v}</span> : v < 0 ? <span style={{ color: '#52c41a' }}>{v}</span> : v },
+                  { title: '计划', dataIndex: 'planned', key: 'planned', render: v => `${v} 人天` },
+                  { title: '实际', dataIndex: 'actual', key: 'actual', render: v => `${v} 人天` },
+                  { title: '偏差', dataIndex: 'variance', key: 'variance', render: v => v > 0 ? <span style={{ color: '#ff4d4f' }}>+{v}</span> : v < 0 ? <span style={{ color: '#52c41a' }}>{v}</span> : v },
                   { title: '偏差率', dataIndex: 'variance_pct', key: 'variance_pct', render: v => v != null ? `${v > 0 ? '+' : ''}${v}%` : '-' },
                   { title: '状态', dataIndex: 'status', key: 'status', render: s => {
                     const map = { over: { color: 'red', text: '超支' }, under: { color: 'green', text: '节省' }, on_track: { color: 'blue', text: '正常' } };

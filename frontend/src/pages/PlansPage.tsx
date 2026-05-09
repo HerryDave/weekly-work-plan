@@ -154,7 +154,13 @@ const PlansPage: React.FC = () => {
               options={groups.map(g => ({ label: g.name, value: g.id }))}
             />
           )}
-          <DatePicker picker="week" value={weekStart} onChange={d => d && setWeekStart(d.startOf('week'))} />
+          <DatePicker picker="week" value={weekStart} onChange={d => {
+            if (!d) return;
+            // 强制转为周一（weekStart=1 但 dayjs.startOf('week') 不参考 locale）
+            const day = d.day(); // 0=Sun
+            const monday = day === 0 ? d.subtract(6, 'day') : d.subtract(day - 1, 'day');
+            setWeekStart(monday);
+          }} />
           {isManager && <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>保存</Button>}
           {!isManager && !isLeader && (
             <Popconfirm title="提交本周计划？" onConfirm={handleSave}>

@@ -57,6 +57,22 @@ class ProjectMemberResponse(ProjectMemberBase):
     joined_at: datetime
 
 
+class ProjectMergeRequest(BaseModel):
+    source_project_id: int
+    target_project_id: int
+
+
+class ProjectMergePreviewResponse(BaseModel):
+    source_project_name: str
+    target_project_name: str
+    members_count: int
+    plans_count: int
+    duplicate_plans_count: int
+    registrations_count: int
+    duplicate_registrations_count: int
+    efforts_count: int
+
+
 class ProjectWeeklyDemandBase(BaseModel):
     week_start_date: date
     required_man_days: float

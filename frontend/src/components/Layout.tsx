@@ -12,6 +12,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   WarningOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -89,6 +90,15 @@ const Layout: React.FC = () => {
       icon: <BellOutlined />,
       label: '通知中心',
     },
+    ...(isManager
+      ? [
+          {
+            key: '/operations',
+            icon: <HistoryOutlined />,
+            label: '操作日志',
+          },
+        ]
+      : []),
   ];
 
   const userMenuItems = [

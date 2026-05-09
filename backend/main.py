@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, groups, users, projects, members, plans, efforts, alerts, notifications, dashboard, manpower, variance
+from app.api import auth, groups, users, projects, members, plans, efforts, alerts, notifications, dashboard, manpower, variance, operations
 
 # Configure logging
 import logging
@@ -47,6 +47,7 @@ app.include_router(variance.router, prefix="/api/v1")
 app.include_router(alerts.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
+app.include_router(operations.router, prefix="/api/v1")
 
 
 @app.get("/")

@@ -27,6 +27,7 @@ class ActualEffortResponse(ActualEffortBase):
     group_name: str | None = None
     project_name: str | None = None
     created_by_real_name: str | None = None
+    week_label: str | None = None
 
 
 class ActualEffortBatchItem(BaseModel):

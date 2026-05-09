@@ -9,7 +9,6 @@ from app.models.project import Project, ProjectMember
 from app.models.notification import Notification
 from app.schemas.project import ProjectMemberCreate, ProjectMemberResponse
 from app.dependencies import get_current_user
-from app.models.operation_log import OperationLog
 
 router = APIRouter(prefix="/projects", tags=["members"])
 
@@ -115,15 +114,6 @@ async def add_project_member(
     db.add(member)
     await db.flush()  # get member.id
 
-    # 记录操作日志
-    db.add(OperationLog(
-        operator_id=current_user.id,
-        action="member_add",
-        entity_type="project_member",
-        entity_id=member.id,
-        detail=f'{{"user_id": {member_data.user_id}, "project_id": {project_id}}}',
-    ))
-
     # 跨组支持通知（W03）：添加跨组成员时通知对方组长
     if user.group_id:
         leader_result = await db.execute(
@@ -178,15 +168,6 @@ async def remove_project_member(
 
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
-
-    # 记录操作日志（在删除前）
-    db.add(OperationLog(
-        operator_id=current_user.id,
-        action="member_remove",
-        entity_type="project_member",
-        entity_id=user_id,  # 用 user_id 代替已被删除的 member.id
-        detail=f'{{"user_id": {user_id}, "project_id": {project_id}}}',
-    ))
 
     await db.delete(member)
 

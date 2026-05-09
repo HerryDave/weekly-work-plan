@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class WeeklyPlanBase(BaseModel):
@@ -7,6 +7,13 @@ class WeeklyPlanBase(BaseModel):
     project_id: int
     week_start_date: date
     planned_man_days: float = 0.0
+
+    @field_validator("week_start_date")
+    @classmethod
+    def must_be_monday(cls, v: date) -> date:
+        if v.weekday() != 0:
+            raise ValueError(f"week_start_date 必须是周一，传入的是 {v}（{v.strftime('%A')}）")
+        return v
 
 
 class WeeklyPlanCreate(WeeklyPlanBase):

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Table, Space, Modal, message, Typography, Select, Tag, Progress, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MergeOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useNavigate } from 'react-router-dom';
-import { getProjects, createProject, updateProject, deleteProject, getUsers, getGroups } from '../api';
+import { getProjects, createProject, updateProject, deleteProject, getUsers, getGroups, mergeProjects, getMergePreview } from '../api';
 import type { Project, User, Group } from '../types';
+import type { MergePreview } from '../api';
 
 const { Title } = Typography;
 
@@ -16,6 +17,12 @@ const ProjectsPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [form] = Form.useForm();
+  const [mergeModalVisible, setMergeModalVisible] = useState(false);
+  const [sourceProject, setSourceProject] = useState<Project | null>(null);
+  const [targetProjectId, setTargetProjectId] = useState<number | null>(null);
+  const [mergePreview, setMergePreview] = useState<MergePreview | null>(null);
+  const [mergeLoading, setMergeLoading] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchProjects = async () => {
@@ -73,6 +80,35 @@ const ProjectsPage: React.FC = () => {
     } catch { message.error('操作失败'); }
   };
 
+  const handleMergeSelect = async (targetId: number) => {
+    if (!sourceProject) return;
+    setTargetProjectId(targetId);
+    setPreviewLoading(true);
+    try {
+      const preview = await getMergePreview(sourceProject.id, targetId);
+      setMergePreview(preview);
+    } catch {
+      message.error('获取合并预览失败');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleMergeConfirm = async () => {
+    if (!sourceProject || !targetProjectId) return;
+    setMergeLoading(true);
+    try {
+      await mergeProjects(sourceProject.id, targetProjectId);
+      message.success('合并成功');
+      setMergeModalVisible(false);
+      setSourceProject(null);
+      setTargetProjectId(null);
+      setMergePreview(null);
+      fetchProjects();
+    } catch { message.error('合并失败'); }
+    finally { setMergeLoading(false); }
+  };
+
   const statusMap: Record<string, { color: string; text: string }> = {
     preparing: { color: 'blue', text: '筹备中' },
     active: { color: 'green', text: '进行中' },
@@ -113,11 +149,14 @@ const ProjectsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 230,
       render: (_, r) => (
         <Space>
           <Button type="link" icon={<EyeOutlined />} onClick={() => navigate(`/projects/${r.id}`)}>详情</Button>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(r)}>编辑</Button>
+          {r.status !== 'closed' && (
+            <Button type="link" icon={<MergeOutlined />} onClick={() => { setSourceProject(r); setMergeModalVisible(true); }}>合并</Button>
+          )}
           <Popconfirm title="确定删除？" onConfirm={() => handleDelete(r.id)}>
             <Button type="link" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
@@ -171,6 +210,64 @@ const ProjectsPage: React.FC = () => {
             <Input type="date" />
           </Form.Item>
         </Form>
+      </Modal>
+      <Modal
+        title="合并项目"
+        open={mergeModalVisible}
+        onCancel={() => { setMergeModalVisible(false); setSourceProject(null); setTargetProjectId(null); setMergePreview(null); }}
+        footer={null}
+        width={560}
+      >
+        {sourceProject && (
+          <div>
+            <p style={{ marginBottom: 12 }}>
+              将项目 <strong>{sourceProject.name}</strong> 合并到：
+            </p>
+            <Select
+              placeholder="请选择目标项目"
+              style={{ width: '100%' }}
+              onChange={handleMergeSelect}
+              loading={previewLoading}
+              value={targetProjectId}
+            >
+              {projects
+                .filter(p => p.id !== sourceProject.id && p.status !== 'closed')
+                .map(p => (
+                  <Select.Option key={p.id} value={p.id}>
+                    {p.name}（{p.status === 'preparing' ? '筹备中' : p.status === 'active' ? '进行中' : '已结项'}）
+                  </Select.Option>
+                ))}
+            </Select>
+
+            {mergePreview && (
+              <div style={{ marginTop: 20, padding: '12px 16px', background: '#f5f5f5', borderRadius: 6 }}>
+                <p style={{ marginBottom: 8, fontWeight: 500 }}>
+                  确认将 <strong>{mergePreview.source_project_name}</strong> 合并到 <strong>{mergePreview.target_project_name}</strong>？
+                </p>
+                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#666' }}>
+                  <li>成员：{mergePreview.members_count} 人</li>
+                  <li>周计划：{mergePreview.plans_count} 条（{mergePreview.duplicate_plans_count} 条重复将忽略）</li>
+                  <li>人力报备：{mergePreview.registrations_count} 条（{mergePreview.duplicate_registrations_count} 条重复将忽略）</li>
+                  <li>实际投入：{mergePreview.efforts_count} 条</li>
+                </ul>
+                <p style={{ marginTop: 8, marginBottom: 0, fontSize: 12, color: '#999' }}>
+                  合并后源项目将被删除，数据不可恢复。
+                </p>
+              </div>
+            )}
+
+            {mergePreview && (
+              <div style={{ marginTop: 16, textAlign: 'right' }}>
+                <Button onClick={() => { setTargetProjectId(null); setMergePreview(null); }} style={{ marginRight: 8 }}>
+                  取消
+                </Button>
+                <Button type="primary" danger loading={mergeLoading} onClick={handleMergeConfirm}>
+                  确认合并
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );

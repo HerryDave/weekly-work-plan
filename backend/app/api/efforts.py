@@ -14,8 +14,6 @@ from app.models.plan import WeeklyPlan
 from app.schemas.effort import ActualEffortBatchRequest, ActualEffortResponse, ActualEffortCreate
 from app.dependencies import get_current_user
 from app.utils.alert_engine import trigger_alerts_on_effort_change
-from app.models.operation_log import OperationLog
-import json
 
 router = APIRouter(prefix="/efforts", tags=["efforts"])
 
@@ -36,6 +34,8 @@ def _build_effort_response(effort: ActualEffort, user: User = None, project=None
             room = user.group.room
             group_name = (room + group_name) if room else group_name
 
+    week_label = f"W{effort.week_start_date.isocalendar()[1]}/{effort.week_start_date.month:02d}-{effort.week_start_date.day:02d}"
+
     return {
         "id": effort.id,
         "user_id": effort.user_id,
@@ -52,6 +52,7 @@ def _build_effort_response(effort: ActualEffort, user: User = None, project=None
         "group_name": group_name,
         "project_name": project.name if project else None,
         "created_by_real_name": creator.real_name if creator else None,
+        "week_label": week_label,
     }
 
 
@@ -226,13 +227,6 @@ async def batch_update_efforts(
         await trigger_alerts_on_effort_change(
             db, effort_data.user_id, effort_data.project_id, effort_data.week_start_date
         )
-        db.add(OperationLog(
-            operator_id=current_user.id,
-            action=action,
-            entity_type="actual_effort",
-            entity_id=record.id,
-            detail=json.dumps({"before": before, "after": after}, ensure_ascii=False),
-        ))
     await db.commit()
 
     effort_ids = [r[0].id for r in results]

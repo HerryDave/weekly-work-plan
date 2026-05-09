@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.db
 .env
+.DS_Store
 
 # Frontend
 frontend/node_modules/

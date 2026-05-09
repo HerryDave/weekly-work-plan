@@ -16,6 +16,7 @@ import AlertsPage from './pages/AlertsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ManpowerPage from './pages/ManpowerPage';
 import OperationsLogPage from './pages/OperationsLogPage';
+import ProjectWeeklyPlanPage from './pages/ProjectWeeklyPlanPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
   children,
@@ -96,6 +97,14 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute allowedRoles={['manager', 'leader']}>
               <EffortsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="project-weekly-plan"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'leader']}>
+              <ProjectWeeklyPlanPage />
             </ProtectedRoute>
           }
         />

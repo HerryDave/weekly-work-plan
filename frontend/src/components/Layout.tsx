@@ -78,6 +78,11 @@ const Layout: React.FC = () => {
             icon: <BarChartOutlined />,
             label: '人员投入',
           },
+          {
+            key: '/project-weekly-plan',
+            icon: <ProjectOutlined />,
+            label: '项目周计划',
+          },
         ]
       : []),
     {

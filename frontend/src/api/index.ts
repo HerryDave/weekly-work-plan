@@ -237,3 +237,51 @@ export const getProjectVariance = async (projectId: number): Promise<ProjectVari
 export const batchResolveAlerts = async (alertIds: number[]): Promise<void> => {
   await axiosInstance.post(`${BASE}/alerts/batch-resolve`, alertIds);
 };
+
+// ========== 项目周计划 ==========
+export const getProjectWeeklyStatus = async (params: {
+  week_start_date?: string;
+  group_id?: number;
+}): Promise<{
+  week_start_date: string;
+  week_dates: string[];
+  weekdays: string[];
+  projects: any[];
+  all_users: { id: number; real_name: string }[];
+  groups: { id: number; name: string; room?: string }[];
+}> => {
+  const resp = await axiosInstance.get(`${BASE}/project-weekly-plan/projects/status`, { params });
+  return resp.data;
+};
+
+export const saveProjectWeeklyStatus = async (data: {
+  project_id: number;
+  week_start_date: string;
+  status: string;
+  risk_desc: string;
+  weekly_progress: string;
+  next_week_plan: string;
+  daily_allocations: Record<string, number[]>;
+}): Promise<{ success: boolean; status_id: number }> => {
+  const resp = await axiosInstance.post(`${BASE}/project-weekly-plan/projects/status`, data);
+  return resp.data;
+};
+
+export const getProjectWeeklyDimension = async (params: {
+  week_start_date?: string;
+}): Promise<{
+  week_start_date: string;
+  summary: { total_projects: number; total_users: number; avg_projects_per_user: number };
+  details: {
+    user_id: number;
+    user_name: string;
+    project_count: number;
+    total_days: number;
+    ratio: number;
+    project_names: string[];
+  }[];
+  analysis: string[];
+}> => {
+  const resp = await axiosInstance.get(`${BASE}/project-weekly-plan/projects/dimension`, { params });
+  return resp.data;
+};

@@ -7,6 +7,7 @@ from app.models.effort import ActualEffort
 from app.models.alert import Alert
 from app.models.notification import Notification
 from app.models.operation_log import OperationLog
+from app.models.project_weekly_plan import ProjectWeeklyStatus, ProjectWeeklyMemberAllocation
 
 __all__ = [
     "Group",
@@ -20,4 +21,6 @@ __all__ = [
     "Alert",
     "Notification",
     "OperationLog",
+    "ProjectWeeklyStatus",
+    "ProjectWeeklyMemberAllocation",
 ]

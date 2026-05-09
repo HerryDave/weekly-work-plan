@@ -10,7 +10,5 @@ dayjs.extend(localeData);
 dayjs.locale('zh-cn');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );

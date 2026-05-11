@@ -23,6 +23,7 @@ export interface Group {
 
 export interface Project {
   id: number;
+  task_code?: string | null;
   name: string;
   description: string | null;
   type: ProjectType;

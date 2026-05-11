@@ -62,6 +62,7 @@ async def _build_project_response(db: AsyncSession, project: Project) -> dict:
 
     return {
         "id": project.id,
+        "task_code": project.task_code,
         "name": project.name,
         "description": project.description,
         "type": project.type.value if hasattr(project.type, 'value') else project.type,
@@ -129,6 +130,7 @@ async def create_project(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="只有室经理或组长可以创建项目")
 
     project = Project(
+        task_code=project_data.task_code,
         name=project_data.name,
         description=project_data.description,
         type=project_data.type,
@@ -192,6 +194,8 @@ async def update_project(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="无权修改此项目")
 
     before = {"name": project.name, "status": project.status.value if hasattr(project.status, 'value') else project.status}
+    if project_data.task_code is not None:
+        project.task_code = project_data.task_code
     if project_data.name is not None:
         project.name = project_data.name
     if project_data.description is not None:

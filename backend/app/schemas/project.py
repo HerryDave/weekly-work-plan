@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ProjectBase(BaseModel):
+    task_code: str | None = None
     name: str
     description: str | None = None
     type: str = "internal"  # internal=流量项目, cross=重点项目
@@ -16,6 +17,7 @@ class ProjectCreate(ProjectBase):
 
 
 class ProjectUpdate(BaseModel):
+    task_code: str | None = None
     name: str | None = None
     description: str | None = None
     type: str | None = None

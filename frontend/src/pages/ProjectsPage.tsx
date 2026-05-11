@@ -117,6 +117,7 @@ const ProjectsPage: React.FC = () => {
 
   const columns: ColumnsType<Project> = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+    { title: '任务编号', dataIndex: 'task_code', key: 'task_code', width: 100, render: t => t || '-' },
     { title: '项目名称', dataIndex: 'name', key: 'name' },
     { title: '类型', dataIndex: 'type', key: 'type', render: t => <Tag>{t === 'internal' ? '组内' : '跨组'}</Tag> },
     { title: '状态', dataIndex: 'status', key: 'status', render: s => <Tag color={statusMap[s]?.color}>{statusMap[s]?.text}</Tag> },
@@ -174,6 +175,9 @@ const ProjectsPage: React.FC = () => {
       <Table columns={columns} dataSource={projects} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} />
       <Modal title={editingProject ? '编辑项目' : '新建项目'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} okText="确定" cancelText="取消" width={600}>
         <Form form={form} layout="vertical">
+          <Form.Item name="task_code" label="任务编号">
+            <Input placeholder="请输入任务编号" />
+          </Form.Item>
           <Form.Item name="name" label="项目名称" rules={[{ required: true }]}>
             <Input placeholder="项目名称" />
           </Form.Item>

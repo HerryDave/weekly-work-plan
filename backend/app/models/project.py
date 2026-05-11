@@ -26,6 +26,7 @@ class Project(Base):
     __tablename__ = "projects"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    task_code: Mapped[str | None] = mapped_column(String(50), nullable=True)  # 任务编号
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     type: Mapped[ProjectType] = mapped_column(SQLEnum(ProjectType), default=ProjectType.internal)
